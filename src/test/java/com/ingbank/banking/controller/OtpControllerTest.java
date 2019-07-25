@@ -3,6 +3,8 @@ package com.ingbank.banking.controller;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.security.NoSuchAlgorithmException;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -31,7 +33,7 @@ public class OtpControllerTest {
 	int otp=121212;
 	
 	@Test
-	public void testGenerateOtpWithSucess() throws ApplicationException
+	public void testGenerateOtpWithSucess() throws ApplicationException, NoSuchAlgorithmException
 	{
 		
 		Mockito.when(otpService.processOtp(Mockito.anyLong())).thenReturn(new Integer(121212));

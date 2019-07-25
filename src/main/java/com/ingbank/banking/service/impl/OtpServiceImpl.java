@@ -1,5 +1,7 @@
 package com.ingbank.banking.service.impl;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +31,8 @@ public class OtpServiceImpl implements OtpService {
 	//cache based on username and OPT MAX 8 
 	 private static final Integer EXPIRE_MINS = 5;
 	 private LoadingCache<String, Integer> otpCache;
+
+	private Object random;
 	 
 	 public OtpServiceImpl(){
 		 super();
@@ -43,9 +47,9 @@ public class OtpServiceImpl implements OtpService {
 	 
 	//This method is used to push the opt number against Key. Rewrite the OTP if it exists
 	 //Using user id  as key
-	 public int generateOTP(String key){
-		 Random random = new Random();
-		 int otp = 100000 + random.nextInt(900000);
+	 public int generateOTP(String key) throws NoSuchAlgorithmException{
+		 Random rand = SecureRandom.getInstanceStrong();
+		 int otp = 100000 + rand.nextInt(900000);
 		 otpCache.put(key, otp);
 		 return otp;
 		  }
@@ -64,7 +68,7 @@ public class OtpServiceImpl implements OtpService {
 		otpCache.invalidate(key);
 	 }
 	
-	public int processOtp(Long transactionId) throws ApplicationException {
+	public int processOtp(Long transactionId) throws ApplicationException, NoSuchAlgorithmException{
 		
 		Customer customer = new Customer();
 		Transaction transaction = transactionService.getTransactionById(transactionId);

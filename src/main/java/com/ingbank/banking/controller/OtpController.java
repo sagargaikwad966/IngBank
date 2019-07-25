@@ -1,5 +1,7 @@
 package com.ingbank.banking.controller;
 
+import java.security.NoSuchAlgorithmException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +33,7 @@ public class OtpController {
 
 	@GetMapping("/generateOtp")
 	public ResponseEntity<Integer> generateOtp(@RequestParam("transactionId") Long transactionId)
-			throws ApplicationException {
+			throws ApplicationException, NoSuchAlgorithmException {
 
 		int otp = otpService.processOtp(transactionId);
 
