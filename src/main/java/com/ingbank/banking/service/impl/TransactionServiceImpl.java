@@ -50,6 +50,7 @@ public class TransactionServiceImpl implements TransactionService {
 			statementModel.setCustomerId(customerId);
 
 			String month = transaction.getTransactionDateTime().getMonth().name();
+			
 			if (transaction.getTransactionType().equalsIgnoreCase("RECEIVE PAYMENT")) {
 				if (transactionsMap.containsKey(month)) {
 					statementModel.setTotalIncoming(
