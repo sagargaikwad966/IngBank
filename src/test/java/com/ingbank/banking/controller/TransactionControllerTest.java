@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.sql.SQLDataException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +20,7 @@ import com.ingbank.banking.entity.Customer;
 import com.ingbank.banking.entity.Transaction;
 import com.ingbank.banking.exception.ApplicationException;
 import com.ingbank.banking.model.ResponseData;
+import com.ingbank.banking.model.StatementModel;
 import com.ingbank.banking.model.TransactionRequestModel;
 import com.ingbank.banking.service.CustomerService;
 import com.ingbank.banking.service.TransactionService;
@@ -28,10 +31,10 @@ public class TransactionControllerTest
 {
 	@InjectMocks
 	TransactionController transactionController;
-	
+
 	@Mock
 	TransactionService transactionServiceMock;
-	
+
 	@Mock
 	CustomerService customerServiceMock;
 	
@@ -65,4 +68,26 @@ public class TransactionControllerTest
 		assertEquals(200, response.getBody().getResponseStatus().value());
 	}
 
+	@Test
+	public void testviewMonthlyStatement() throws ApplicationException {
+
+		Long customerId = 1L;
+		String year = "2019";
+
+		StatementModel statementModel = new StatementModel();
+
+		statementModel.setTotalIncoming(20000.00);
+		statementModel.setTotalOutgoing(10000.00);
+		statementModel.setClosingBalance(10000.00);
+		statementModel.setCustomerId(1L);
+
+		Map<String, StatementModel> statementMap = new HashMap<String, StatementModel>();
+		statementMap.put("January", statementModel);
+		Mockito.when(transactionServiceMock.getYearlyStatement(customerId, year)).thenReturn(statementMap);
+
+		ResponseEntity<ResponseData> response = transactionController.viewMonthlyStatement(1L, year);
+
+		assertNotNull(response);
+		assertEquals(200, response.getStatusCodeValue());
+	}
 }
