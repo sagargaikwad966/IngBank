@@ -15,8 +15,8 @@ public interface OtpService {
 
 	public void clearOTP(String key);
 
-	public int processOtp(Long transactionId) throws ApplicationException, NoSuchAlgorithmException;
+	public int processOtp(String referenceId) throws ApplicationException, NoSuchAlgorithmException;
 
-	public String processValidOtp(int otpnum, String customerId);
+	public boolean processValidOtp(int otpnum, String referenceId);
 
 }

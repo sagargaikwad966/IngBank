@@ -1,5 +1,6 @@
 package com.ingbank.banking.controller;
 
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,26 +32,31 @@ public class OtpController {
 
 	@Autowired
 	public MyEmailService myEmailService;
+	
+	
 
-	@GetMapping("/generateOtp")
-	public ResponseEntity<Integer> generateOtp(@RequestParam("transactionId") Long transactionId)
-			throws ApplicationException, NoSuchAlgorithmException {
+	@GetMapping("/generateOtp/{referenceId}")
+	public ResponseEntity<Integer> generateOtp(@PathVariable("referenceId") String referenceId)
+			throws ApplicationException, NoSuchAlgorithmException, URISyntaxException {
 
-		int otp = otpService.processOtp(transactionId);
-
-		myEmailService.sendOtpMessage("sssaurabhsuman@gmail.com", "OTP", String.valueOf(otp));
-
+		int otp = otpService.processOtp(referenceId);
+		
 		logger.info("OTP : " + otp);
+
 		return new ResponseEntity<Integer>(otp, HttpStatus.OK);
 
 	}
 
-	@RequestMapping(value = "/validateOtp", method = RequestMethod.GET)
-	public ResponseEntity<String> validateOtp(@RequestParam("otpnum") int otpnum,
-			@RequestParam("customerId") String customerId) {
-		String response = otpService.processValidOtp(otpnum, customerId);
-		// ResponseData response = new ResponseData();
-		return new ResponseEntity<>(response, HttpStatus.OK);
+	
+
+	@GetMapping(value = "/validateOtp/{referenceId}/{otpnum}")
+	public ResponseEntity<String> validateOtp(@PathVariable("otpnum") int otpnum, @PathVariable("referenceId") String referenceId) 
+	{
+		boolean response = otpService.processValidOtp(otpnum, referenceId);
+		if(response)
+			return new ResponseEntity<>("Valid", HttpStatus.OK);
+		else
+			return new ResponseEntity<>("Invalid", HttpStatus.OK);
 	}
 
 }

@@ -5,41 +5,31 @@ import java.security.SecureRandom;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.ingbank.banking.entity.Customer;
-import com.ingbank.banking.entity.Transaction;
 import com.ingbank.banking.exception.ApplicationException;
-import com.ingbank.banking.service.CustomerService;
 import com.ingbank.banking.service.OtpService;
-import com.ingbank.banking.service.TransactionService;
 
 @Service
 public class OtpServiceImpl implements OtpService {
 	
+
 	
-	@Autowired
-	TransactionService transactionService;
-	
-	@Autowired
-	CustomerService customerService;
-	
-	//cache based on username and OPT MAX 8 
 	 private static final Integer EXPIRE_MINS = 5;
 	 private LoadingCache<String, Integer> otpCache;
 
 	private Object random;
 	 
-	 public OtpServiceImpl(){
+	 public OtpServiceImpl()
+	 {
 		 super();
 		 otpCache = CacheBuilder.newBuilder().
 		     expireAfterWrite(
 		    		 EXPIRE_MINS, TimeUnit.MINUTES).build(new CacheLoader<String, Integer>() {
-		    			 	public Integer load(String key) {
+		    			 	public Integer load(String referenceId) {
 		    			 				return 0;
 		    			 	}
 		    		 });
@@ -47,62 +37,46 @@ public class OtpServiceImpl implements OtpService {
 	 
 	//This method is used to push the opt number against Key. Rewrite the OTP if it exists
 	 //Using user id  as key
-	 public int generateOTP(String key) throws NoSuchAlgorithmException{
-		 Random rand = SecureRandom.getInstanceStrong();
-		 int otp = 100000 + rand.nextInt(900000);
-		 otpCache.put(key, otp);
-		 return otp;
-		  }
+	public int generateOTP(String referenceId) throws NoSuchAlgorithmException {
+		Random rand = SecureRandom.getInstanceStrong();
+		int otp = 100000 + rand.nextInt(900000);
+		otpCache.put(referenceId, otp);
+		return otp;
+	}
 	 
 	 //This method is used to return the OPT number against Key->Key values is username
-	 public int getOtp(String key){ 
+	 public int getOtp(String referenceId)
+	 { 
 		 try{
-			 return otpCache.get(key); 
+			 return otpCache.get(referenceId); 
 		 }catch (Exception e){
 			 return 0; 
 		 }
 	 }
 	 
 	//This method is used to clear the OTP catched already
-	public void clearOTP(String key){ 
-		otpCache.invalidate(key);
-	 }
+	public void clearOTP(String referenceId)
+	{ 
+		otpCache.invalidate(referenceId);
+	}
 	
-	public int processOtp(Long transactionId) throws ApplicationException, NoSuchAlgorithmException{
-		
-		Customer customer = new Customer();
-		Transaction transaction = transactionService.getTransactionById(transactionId);
-		if(transaction != null ) {
-			customer = transaction.getCustomer();
-		}
-		return generateOTP(String.valueOf(customer.getUserId()));
+	public int processOtp(String referenceId) throws ApplicationException, NoSuchAlgorithmException
+	{
+		return generateOTP(referenceId);
 	}
 	
 	
-	 public String processValidOtp(int otpnum,String customerId) {
-		 final String SUCCESS = "Entered Otp is valid. Transaction Successful";
-			final String FAIL = "Entered Otp is NOT valid. Please Retry!";
-			//logger.info(" Otp Number : "+otpnum);
-		
-			//Validate the Otp 
-			
-			if(otpnum >= 0){
-				int serverOtp = getOtp(customerId);
-				if(serverOtp > 0){
-					if(otpnum == serverOtp){
-						clearOTP(customerId);
-						return (FAIL);
-					}else{
-						
-						
-						return SUCCESS;
-					}
-				}else {
-					return FAIL;
-				}
-			}else {
-			return FAIL;
-			}
+	 public boolean processValidOtp(int otpnum,String referenceId) 
+	 {
+		int serverOtp = getOtp(referenceId);
+		if (serverOtp == otpnum)
+			return true;
+		else {
+			clearOTP(referenceId);
+			return false;
+		}
 			
 	 }
+
+
 }

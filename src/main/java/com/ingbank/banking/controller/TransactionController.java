@@ -1,5 +1,6 @@
 package com.ingbank.banking.controller;
 
+import java.net.URISyntaxException;
 import java.sql.SQLDataException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +64,7 @@ public class TransactionController {
 
 	@PostMapping("/")
 	public ResponseEntity<ResponseData> doTransaction(@RequestBody TransactionRequestModel transactionRequest)
-			throws SQLDataException, ApplicationException {
+			throws SQLDataException, ApplicationException, URISyntaxException {
 		logger.debug("CONTROLLER : TransactionController METHOD : doTransaction() enter");
 
 		applicationValidation.validateTransactionRequest(transactionRequest);
@@ -72,9 +73,28 @@ public class TransactionController {
 		Customer customer = customerService.getCustomer(transactionRequest.getCustomerId());
 
 		String data = " /Transaction Id : " + doTransaction.getTransactionId() + " /Description : "
-				+ doTransaction.getTransactionDescription() + " /Balance : " + doTransaction.getBalance() + "/";
+				+ doTransaction.getTransactionDescription() + " /Amount : " + doTransaction.getTransactionAmount() + "/";
 		ResponseData response = new ResponseData(
-				"Hi, " + customer.getFirstName() + " your transaction done successfully", HttpStatus.OK, data);
+				"Hi, " + customer.getFirstName() + " your transaction needs to validate", HttpStatus.OK, data);
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+	
+	@PostMapping("/validate")
+	public ResponseEntity<ResponseData> doConfirmTransaction(@RequestParam("otpnum") int otpnum, @RequestParam("transactionId") Long transactionId)
+			throws SQLDataException, ApplicationException, URISyntaxException {
+
+		String validationResult = transactionService.validateOTP(String.valueOf(transactionId), otpnum);
+		
+		if(validationResult.equalsIgnoreCase("Valid"))
+			transactionService.confirmTransaction(transactionId);
+		else
+			throw new ApplicationException("Invalid OTP");
+		
+
+		String data = " /Transaction Id : " + doTransaction.getTransactionId() + " /Description : "
+				+ doTransaction.getTransactionDescription() + " /Amount : " + doTransaction.getTransactionAmount() + "/";
+		ResponseData response = new ResponseData(
+				"Hi, " + customer.getFirstName() + " your transaction needs to validate", HttpStatus.OK, data);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

@@ -47,13 +47,13 @@ public class Transaction implements Serializable
 	@Column(name = "transaction_description", nullable=false)
 	private String transactionDescription;
 	
-	@Column(name = "transaction_amount", nullable=false)
+	@Column(name = "transaction_amount")
 	private Double transactionAmount;
 	
 	@Column(name = "status", nullable=false)
 	private String status;
 	
-	@Column(name = "balance", nullable=false)
+	@Column(name = "balance")
 	private Double balance;
 	
 	@JoinColumn(name = "customer_id")

@@ -65,7 +65,7 @@ public class TransactionControllerTest
 		ResponseEntity<ResponseData> response = transactionController.doTransaction(transactionRequestModel);
 		
 		assertNotNull(response);
-		assertEquals(200, response.getBody().getResponseStatus().value());
+		assertEquals(200, response.getBody().getStatus().value());
 	}
 
 	@Test

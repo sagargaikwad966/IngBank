@@ -1,5 +1,6 @@
 package com.ingbank.banking.service;
 
+import java.net.URISyntaxException;
 import java.sql.SQLDataException;
 import java.util.Map;
 
@@ -18,6 +19,10 @@ public interface TransactionService {
 	public Transaction getTransactionById(Long id);
 
 	public Transaction doTransaction(TransactionRequestModel transactionRequest)
-			throws ApplicationException, SQLDataException;
+			throws ApplicationException, SQLDataException, URISyntaxException;
+
+	public String validateOTP(String transactionId, Integer otp) throws URISyntaxException;
+
+	public Transaction confirmTransaction(Long transactionId);
 
 }

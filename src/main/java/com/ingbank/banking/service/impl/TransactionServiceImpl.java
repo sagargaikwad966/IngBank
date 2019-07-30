@@ -1,5 +1,7 @@
 package com.ingbank.banking.service.impl;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.SQLDataException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -9,10 +11,13 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.ingbank.banking.entity.Customer;
 import com.ingbank.banking.entity.Transaction;
 import com.ingbank.banking.exception.ApplicationException;
+import com.ingbank.banking.model.EmailModel;
+import com.ingbank.banking.model.ResponseData;
 import com.ingbank.banking.model.StatementModel;
 import com.ingbank.banking.model.TransactionRequestModel;
 import com.ingbank.banking.repository.CustomerRepository;
@@ -34,6 +39,9 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Autowired
 	TransactionRepository transactionRepository;
+	
+	@Autowired
+	RestTemplate restTemplate;
 
 
 	public Map<String, StatementModel> getYearlyStatement(Long customerId, String year) throws ApplicationException{ 
@@ -95,9 +103,10 @@ public class TransactionServiceImpl implements TransactionService {
 	
 	@Override
 	public Transaction doTransaction(TransactionRequestModel transactionRequest)
-			throws ApplicationException, SQLDataException 
+			throws ApplicationException, SQLDataException, URISyntaxException 
 	{
 		Customer customer = customerService.getCustomer(transactionRequest.getCustomerId());	
+		
 		Transaction currentTransaction = new Transaction();
 		Transaction fetchLastTransaction = new Transaction();
 		
@@ -126,8 +135,14 @@ public class TransactionServiceImpl implements TransactionService {
 			}
 		}
 		
+		Integer otp = generateOTP(currentTransaction.getTransactionId().toString());
+		
+		sendOTPMail(customer.getEmail(),"OTP FOR "+currentTransaction.getTransactionId().toString(), otp);
+		
 		return currentTransaction;
 	}
+
+
 
 	private Transaction makePayment(TransactionRequestModel transactionRequest, Transaction fetchLastTransaction, Customer customer)
 			throws ApplicationException 
@@ -143,7 +158,7 @@ public class TransactionServiceImpl implements TransactionService {
 			newTransaction.setStatus("PENDING");
 			newTransaction.setTransactionDateTime(LocalDateTime.now());
 			newTransaction.setTransactionAmount(transactionRequest.getTransactionAmount());
-			newTransaction.setBalance(fetchLastTransaction.getBalance() - transactionRequest.getTransactionAmount());
+			//newTransaction.setBalance(fetchLastTransaction.getBalance() - transactionRequest.getTransactionAmount());
 			newTransaction.setCustomer(customer);
 				return transactionRepository.save(newTransaction);
 		}
@@ -158,16 +173,81 @@ public class TransactionServiceImpl implements TransactionService {
 		newTransaction.setTransactionAmount(transactionRequest.getTransactionAmount());
 		newTransaction.setCustomer(customer);
 		
-		if(fetchLastTransaction.getBalance() == null)
-			newTransaction.setBalance(transactionRequest.getTransactionAmount());
-		else
-			newTransaction.setBalance(transactionRequest.getTransactionAmount() + fetchLastTransaction.getBalance());
+		/*
+		 * if(fetchLastTransaction.getBalance() == null)
+		 * newTransaction.setBalance(transactionRequest.getTransactionAmount()); else
+		 * newTransaction.setBalance(transactionRequest.getTransactionAmount() +
+		 * fetchLastTransaction.getBalance());
+		 */
 
 		return transactionRepository.save(newTransaction);
 
 	}
 		
+	private Integer generateOTP(String referenceId) throws URISyntaxException 
+	{
+		final String baseUrl = "http://localhost:9090/ingbank/otp/generateOtp/";
+		URI uri = new URI(baseUrl);
 
+		return restTemplate.getForObject(uri + referenceId, Integer.class);
+		
+	}
+	
+
+	private void sendOTPMail(String email, String subject, Integer otp) throws URISyntaxException 
+	{
+		final String baseUrl = "http://localhost:9090/ingbank/notifications/email";
+		URI uri = new URI(baseUrl);
+
+		EmailModel emailModel = new EmailModel(email, subject, String.valueOf(otp));
+		
+		restTemplate.postForEntity(uri, emailModel, ResponseData.class);
+	}
+	
+	@Override
+	public String validateOTP(String transactionId, Integer otp) throws URISyntaxException 
+	{
+		final String baseUrl = "http://localhost:9090/ingbank/otp/validateOtp/";
+		URI uri = new URI(baseUrl);
+		
+		return restTemplate.getForObject(uri + transactionId+"/"+otp, String.class);
+	}
+
+
+	@Override
+	public Transaction confirmTransaction(Long transactionId) 
+	{
+		Transaction currentTransaction = new Transaction();
+		Transaction transaction = getTransactionById(transactionId);
+		Transaction fetchLastTransaction = new Transaction();
+		Customer customer = transaction.getCustomer();
+		
+		if(customer.getTransactionList().isEmpty())
+		{
+			transaction.setBalance(transaction.getTransactionAmount());
+			transaction.setStatus("CONFIRM");
+			currentTransaction = transactionRepository.save(transaction);
+
+		}
+		else
+		{
+			fetchLastTransaction = customer.getTransactionList().get(customer.getTransactionList().size()-1);
+			if (transaction.getTransactionType().equalsIgnoreCase("RECEIVE PAYMENT")) 
+			{
+				transaction.setBalance(transaction.getTransactionAmount() + fetchLastTransaction.getBalance());
+				transaction.setStatus("CONFIRM");
+				currentTransaction = transactionRepository.save(transaction);
+			} 
+			else if (transaction.getTransactionType().equalsIgnoreCase("MAKE PAYMENT"))
+			{
+				transaction.setBalance(transaction.getTransactionAmount() - fetchLastTransaction.getBalance());
+				transaction.setStatus("CONFIRM");
+				currentTransaction = transactionRepository.save(transaction);
+			}
+		}
+		return currentTransaction;
+		
+	}
 
 
 }

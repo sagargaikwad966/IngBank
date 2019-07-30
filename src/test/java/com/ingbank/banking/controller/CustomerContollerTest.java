@@ -57,7 +57,7 @@ public class CustomerContollerTest {
 		Mockito.when(customerService.addCustomer(Mockito.any(CustomerRequestModel.class))).thenReturn(customer1);
 		ResponseEntity<ResponseData> responsedata = customerController.createCustomer(customerrequestmodel);
 		assertNotNull(responsedata);
-		assertEquals(200, responsedata.getBody().getResponseStatus().value());
+		assertEquals(200, responsedata.getBody().getStatus().value());
 		assertEquals(1L, responsedata.getBody().getData());
 
 	}
