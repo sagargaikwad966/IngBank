@@ -84,17 +84,21 @@ public class TransactionController {
 			throws SQLDataException, ApplicationException, URISyntaxException {
 
 		String validationResult = transactionService.validateOTP(String.valueOf(transactionId), otpnum);
+		Transaction confirmTransaction = new Transaction();
+		Customer customer = new Customer();
 		
-		if(validationResult.equalsIgnoreCase("Valid"))
-			transactionService.confirmTransaction(transactionId);
-		else
+		if(validationResult.equalsIgnoreCase("Valid")) 
+		{
+			confirmTransaction = transactionService.confirmTransaction(transactionId);
+			customer = confirmTransaction.getCustomer();
+		} else
 			throw new ApplicationException("Invalid OTP");
 		
 
-		String data = " /Transaction Id : " + doTransaction.getTransactionId() + " /Description : "
-				+ doTransaction.getTransactionDescription() + " /Amount : " + doTransaction.getTransactionAmount() + "/";
+		String data = " /Transaction Id : " + confirmTransaction.getTransactionId() + " /Description : "
+				+ confirmTransaction.getTransactionDescription() + " /Balance : " + confirmTransaction.getBalance() + "/";
 		ResponseData response = new ResponseData(
-				"Hi, " + customer.getFirstName() + " your transaction needs to validate", HttpStatus.OK, data);
+				"Hi, " + customer.getFirstName() + " your transaction done successfully", HttpStatus.OK, data);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 

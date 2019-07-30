@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.SQLDataException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,7 +159,7 @@ public class TransactionServiceImpl implements TransactionService {
 			newTransaction.setStatus("PENDING");
 			newTransaction.setTransactionDateTime(LocalDateTime.now());
 			newTransaction.setTransactionAmount(transactionRequest.getTransactionAmount());
-			//newTransaction.setBalance(fetchLastTransaction.getBalance() - transactionRequest.getTransactionAmount());
+			newTransaction.setBalance(fetchLastTransaction.getBalance() - transactionRequest.getTransactionAmount());
 			newTransaction.setCustomer(customer);
 				return transactionRepository.save(newTransaction);
 		}
@@ -173,12 +174,11 @@ public class TransactionServiceImpl implements TransactionService {
 		newTransaction.setTransactionAmount(transactionRequest.getTransactionAmount());
 		newTransaction.setCustomer(customer);
 		
-		/*
-		 * if(fetchLastTransaction.getBalance() == null)
-		 * newTransaction.setBalance(transactionRequest.getTransactionAmount()); else
-		 * newTransaction.setBalance(transactionRequest.getTransactionAmount() +
-		 * fetchLastTransaction.getBalance());
-		 */
+		if(null == fetchLastTransaction.getCustomer())
+			newTransaction.setBalance(transactionRequest.getTransactionAmount()); 
+		else
+			newTransaction.setBalance(transactionRequest.getTransactionAmount() +fetchLastTransaction.getBalance());
+		 
 
 		return transactionRepository.save(newTransaction);
 
@@ -215,38 +215,54 @@ public class TransactionServiceImpl implements TransactionService {
 
 
 	@Override
-	public Transaction confirmTransaction(Long transactionId) 
+	public Transaction confirmTransaction(Long transactionId) throws ApplicationException 
 	{
-		Transaction currentTransaction = new Transaction();
 		Transaction transaction = getTransactionById(transactionId);
 		Transaction fetchLastTransaction = new Transaction();
-		Customer customer = transaction.getCustomer();
+		
+		Customer customer = customerService.getCustomer(transaction.getCustomer().getUserId());
 		
 		if(customer.getTransactionList().isEmpty())
 		{
 			transaction.setBalance(transaction.getTransactionAmount());
 			transaction.setStatus("CONFIRM");
-			currentTransaction = transactionRepository.save(transaction);
+			transaction = transactionRepository.save(transaction);
 
 		}
 		else
 		{
 			fetchLastTransaction = customer.getTransactionList().get(customer.getTransactionList().size()-1);
+			
 			if (transaction.getTransactionType().equalsIgnoreCase("RECEIVE PAYMENT")) 
 			{
 				transaction.setBalance(transaction.getTransactionAmount() + fetchLastTransaction.getBalance());
 				transaction.setStatus("CONFIRM");
-				currentTransaction = transactionRepository.save(transaction);
+				transaction = transactionRepository.save(transaction);
 			} 
 			else if (transaction.getTransactionType().equalsIgnoreCase("MAKE PAYMENT"))
 			{
-				transaction.setBalance(transaction.getTransactionAmount() - fetchLastTransaction.getBalance());
+				transaction.setBalance(fetchLastTransaction.getBalance() - transaction.getTransactionAmount());
 				transaction.setStatus("CONFIRM");
-				currentTransaction = transactionRepository.save(transaction);
+				transaction = transactionRepository.save(transaction);
 			}
 		}
-		return currentTransaction;
+		return transaction;
 		
+	}
+
+
+	@Override
+	public List<Transaction> getAllTransactionByUser(Long customerId) {
+		
+		Optional<List<Transaction>> transactionOptional = transactionRepository.findByCustomerUserIdAndStatus(customerId, "CONFIRM");
+		List<Transaction> transactionList = new ArrayList<>();
+		
+		boolean isOptionalPresent= transactionOptional.isPresent();
+		if(isOptionalPresent) 
+		{
+			transactionList = transactionOptional.get();
+		}
+		return transactionList;
 	}
 
 

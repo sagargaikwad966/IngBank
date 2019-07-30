@@ -2,6 +2,7 @@ package com.ingbank.banking.service;
 
 import java.net.URISyntaxException;
 import java.sql.SQLDataException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
@@ -23,6 +24,8 @@ public interface TransactionService {
 
 	public String validateOTP(String transactionId, Integer otp) throws URISyntaxException;
 
-	public Transaction confirmTransaction(Long transactionId);
+	public Transaction confirmTransaction(Long transactionId) throws ApplicationException;
+
+	public List<Transaction> getAllTransactionByUser(Long customerId);
 
 }

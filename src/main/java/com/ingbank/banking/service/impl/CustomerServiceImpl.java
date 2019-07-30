@@ -1,5 +1,6 @@
 package com.ingbank.banking.service.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
@@ -7,10 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ingbank.banking.entity.Customer;
+import com.ingbank.banking.entity.Transaction;
 import com.ingbank.banking.exception.ApplicationException;
 import com.ingbank.banking.model.CustomerRequestModel;
 import com.ingbank.banking.repository.CustomerRepository;
 import com.ingbank.banking.service.CustomerService;
+import com.ingbank.banking.service.TransactionService;
 
 @Service
 public class CustomerServiceImpl implements CustomerService
@@ -18,6 +21,9 @@ public class CustomerServiceImpl implements CustomerService
 
 	@Autowired
 	CustomerRepository customerRepository;
+	
+	@Autowired
+	TransactionService transactionService;
 	
 	
 	@Override
@@ -65,6 +71,8 @@ public class CustomerServiceImpl implements CustomerService
 		if(isOptionalPresent)
 		{
 			customer = findByOptional.get();
+			List<Transaction> allTransactionByUserList = transactionService.getAllTransactionByUser(customerId);
+			customer.setTransactionList(allTransactionByUserList);
 		}
 		else
 		{

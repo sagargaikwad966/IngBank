@@ -57,7 +57,7 @@ public class Transaction implements Serializable
 	private Double balance;
 	
 	@JoinColumn(name = "customer_id")
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private Customer customer;
 	
 
