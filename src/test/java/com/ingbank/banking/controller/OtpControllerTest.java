@@ -3,6 +3,7 @@ package com.ingbank.banking.controller;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 
 import org.junit.Test;
@@ -33,11 +34,11 @@ public class OtpControllerTest {
 	int otp=121212;
 	
 	@Test
-	public void testGenerateOtpWithSucess() throws ApplicationException, NoSuchAlgorithmException
+	public void testGenerateOtpWithSucess() throws ApplicationException, NoSuchAlgorithmException, URISyntaxException
 	{
 		
-		Mockito.when(otpService.processOtp(Mockito.anyLong())).thenReturn(new Integer(121212));
-		ResponseEntity<Integer> otpresponse=otpController.generateOtp(1l);
+		Mockito.when(otpService.processOtp(Mockito.anyString())).thenReturn(new Integer(121212));
+		ResponseEntity<Integer> otpresponse=otpController.generateOtp("1");
 		assertNotNull(otpresponse);
 		assertEquals(200, otpresponse.getStatusCode().value());
 	}
@@ -48,7 +49,7 @@ public class OtpControllerTest {
 	public void testvalidateOtpWithSucess() throws ApplicationException
 	{
 		
-		Mockito.when(otpService.processValidOtp(Mockito.anyInt(), Mockito.anyString())).thenReturn("");
+		Mockito.when(otpService.processValidOtp(Mockito.anyInt(), Mockito.anyString())).thenReturn(true);
 		ResponseEntity<String> validateresponse=otpController.validateOtp(otp, "1");
 		assertNotNull(validateresponse);
 		assertEquals(200, validateresponse.getStatusCode().value());

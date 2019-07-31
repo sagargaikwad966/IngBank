@@ -3,6 +3,7 @@ package com.ingbank.banking.controller;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.net.URISyntaxException;
 import java.sql.SQLDataException;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class TransactionControllerTest
 	}
 	
 	@Test
-	public void testDoTransaction() throws ApplicationException, SQLDataException
+	public void testDoTransaction() throws ApplicationException, SQLDataException, URISyntaxException
 	{
 		Mockito.doNothing().when(validationMock).validateTransactionRequest(Mockito.any(TransactionRequestModel.class));
 		Mockito.when(transactionServiceMock.doTransaction(Mockito.any(TransactionRequestModel.class))).thenReturn(transaction);
